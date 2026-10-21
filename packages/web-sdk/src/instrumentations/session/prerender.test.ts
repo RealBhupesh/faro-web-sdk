@@ -307,6 +307,36 @@ describe('prerendered sessions', () => {
     expect(events().map((item) => item.payload.name)).toEqual(['session_start']);
   });
 
+  it('keeps payload overrides when option overrides are also set before activation', () => {
+    start();
+    faro.api.setSession(
+      { overrides: { geoLocationTrackingEnabled: true } },
+      { overrides: { serviceName: 'checkout' } }
+    );
+    activate();
+    faro.api.pushEvent('after-activation');
+    jest.advanceTimersByTime(2000);
+
+    const expected = { geoLocationTrackingEnabled: true, serviceName: 'checkout' };
+    expect(faro.api.getSession()?.overrides).toEqual(expected);
+    expect(events().find((item) => item.payload.name === 'after-activation')?.meta.session?.overrides).toEqual(
+      expected
+    );
+  });
+
+  it('lets option overrides replace the same payload key before activation', () => {
+    start();
+    faro.api.setSession({ overrides: { serviceName: 'from-payload' } }, { overrides: { serviceName: 'from-options' } });
+    activate();
+    faro.api.pushEvent('after-activation');
+    jest.advanceTimersByTime(2000);
+
+    expect(faro.api.getSession()?.overrides).toEqual({ serviceName: 'from-options' });
+    expect(events().find((item) => item.payload.name === 'after-activation')?.meta.session?.overrides).toEqual({
+      serviceName: 'from-options',
+    });
+  });
+
   it('does not queue speculative signals even with an explicitly sampled session', () => {
     const beforeSend = jest.fn((item: TransportItem) => item);
     start({ beforeSend });

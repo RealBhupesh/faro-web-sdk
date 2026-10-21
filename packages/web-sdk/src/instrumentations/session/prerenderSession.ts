@@ -47,8 +47,9 @@ export class PrerenderSession {
       session: {
         id: session?.id,
         attributes: session?.attributes && { ...session.attributes },
+        // Mirrors setSession in core: previous, then payload, then option overrides.
         overrides: update.overrides
-          ? { ...previous?.session.overrides, ...update.overrides }
+          ? { ...previous?.session.overrides, ...session?.overrides, ...update.overrides }
           : overrides && { ...overrides },
       },
     };
